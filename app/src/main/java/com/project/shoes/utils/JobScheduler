@@ -1,0 +1,34 @@
+package com.segsat.scar.receivers;
+
+import android.app.job.JobParameters;
+import android.app.job.JobService;
+import android.content.Intent;
+import android.util.Log;
+
+public class MyJob extends JobService {
+    @Override
+    public boolean onStartJob(JobParameters params) {
+    }
+
+    @Override
+    public boolean onStopJob(JobParameters params) {
+        return false;
+    }
+
+
+}
+
+
+ public void startJob() {
+    //Put it into your Activity to call the job.
+            startService(new Intent(this, SearchLEService.class));
+            ComponentName componentName = new ComponentName(this, MyJob.class);
+            JobInfo uploadTask = new JobInfo.Builder(1, componentName)
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .setPeriodic(TimeUnit.MINUTES.toMillis(5))
+                    .setPersisted(true)
+                    .build();
+            jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            assert jobScheduler != null;
+            jobScheduler.schedule(uploadTask);
+        }

@@ -1,0 +1,17 @@
+OnCreate(){
+    Thread t = new Thread(){
+        @Override
+                run(){
+                    try{
+                        super.run();
+                        sleep(2000);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }finally{
+                        startActivity(new Intent(thisActivity.this, nextActivity.class));
+                        finish;
+                    }
+                }
+            }
+     t.start();
+}
