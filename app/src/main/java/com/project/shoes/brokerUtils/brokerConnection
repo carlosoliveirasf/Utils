@@ -1,0 +1,40 @@
+package com.segsat.scar.rabbitmq;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+public class BrokerConnection {
+
+    private static BrokerConnection instance;
+
+    private Connection connection;
+    private Channel channel;
+
+    public BrokerConnection() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("xxx.xxx.com");
+        factory.setUsername("xxx");
+        factory.setPassword("xxx");
+        factory.setPort(xxx);
+        //factory.setPort(xxx); // porta teste;
+        factory.useSslProtocol();
+
+        connection = factory.newConnection();
+        channel = connection.createChannel();
+    }
+
+    public static BrokerConnection getInstance() throws Exception {
+        if(instance == null)
+            instance = new BrokerConnection();
+
+        return instance;
+    }
+
+    public Channel getChannel() throws Exception {
+        if(channel != null && !channel.isOpen())
+            channel = connection.createChannel();
+
+        return channel;
+    }
+}
