@@ -1,0 +1,77 @@
+package com.segsat.scar.rabbitmq;
+
+import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
+import com.segsat.scar.connection.CustomGson;
+import com.segsat.scar.rabbitmq.object.Area;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Created by carlos.felipe on 28/11/2017.
+ */
+
+public class AreaBroker extends Broker {
+    private Xlistener listener;
+    private AMQP.BasicProperties props;
+    private byte[] message;
+
+    public AreaBroker(X listener) {
+        this.listener = listener;
+        String uuid = UUID.randomUUID().toString();
+        message = "".getBytes();
+
+        props = new AMQP.BasicProperties.Builder()
+                .replyTo(uuid)
+                .correlationId(uuid)
+                .build();
+    }
+
+    public void call() {
+        if (channel == null || !channel.isOpen()) {
+            listener.OnReturn(null);
+            return;
+        }
+
+        try {
+            channel.queueDeclare(props.getReplyTo(), false, false, true, null);
+
+            channel.basicPublish(Exchange.xExchange, Queue.xQueue, props, message);
+
+            channel.basicConsume(props.getReplyTo(), false,
+                    new DefaultConsumer(channel) {
+                        @Override
+                        public void handleDelivery(String consumerTag,
+                                                   Envelope envelope,
+                                                   AMQP.BasicProperties properties,
+                                                   byte[] body) throws IOException {
+                            String routingKey = envelope.getRoutingKey();
+                            String contentType = properties.getContentType();
+                            long deliveryTag = envelope.getDeliveryTag();
+
+                            if (properties.getCorrelationId().equals(props.getCorrelationId())) {
+                                channel.queueDelete(props.getReplyTo());
+                                String jsonBody = new String(body);
+                                X x = Arrays.asList(new CustomGson().fromJson(jsonBody, X.class));
+                                listener.OnReturn(x);
+                            }
+                            channel.basicAck(deliveryTag, false);
+                        }
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+            listener.OnReturn(null);
+        }
+    }
+
+    public interface Xlistener {
+        void OnReturn(X x);
+    }
+}
+
+
